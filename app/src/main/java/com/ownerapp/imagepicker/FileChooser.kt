@@ -2,8 +2,10 @@ package com.ownerapp.imagepicker
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,15 +31,14 @@ class FileChooser : AppCompatActivity() {
     companion object {
         val TAG = FileChooser::class.java.name
         val OUTPUT = "OutPut"
-
+        val ERROR_CONST=-888
         /***
          * status ==0 fetch Error only
          * else get data and other values
          */
         class FileChooserResponse(
-            val status: Int = -888,
+            val status: Int = ERROR_CONST,
             val data: String,
-            val isBase64: Boolean = false,
             val error: String
         ) {
             override fun toString(): String {
@@ -46,20 +47,35 @@ class FileChooser : AppCompatActivity() {
         }
     }
 
-    private val selection =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+    private val selection = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             Log.d(TAG, "imageSelection: " + result.data)
 
             CoroutineScope(Dispatchers.IO).launch {
-                val data = workDataOf(
-                    Constants.URI to (result.data?.data as Uri).toString(),
-                    Constants.EXT to CacheFileSaver.getExtensionString(mimeType),
-                )
-                val resultData = CacheFileSaver.doWorkAsync(applicationContext, data).await()
+
+                val resultData = if( result.data?.extras?.get("data") is Bitmap ){
+                    CacheFileSaver.doWorkAsync(
+                        applicationContext.contentResolver,
+                        applicationContext.cacheDir,
+                        result.data?.extras?.get("data") as Bitmap,
+                        Constants.JPEG()
+                    ).await()
+
+                }
+                else{
+
+                    CacheFileSaver.doWorkAsync(
+                        applicationContext.contentResolver,
+                        applicationContext.cacheDir,
+                        (result.data?.data as Uri).toString(),
+                        mimeType
+                    ).await()
+
+                }
+
                 val intent = Intent()
                 intent.putExtra(OUTPUT, resultData.toString())
 
-                this@FileChooser.setResult(7, intent)
+                this@FileChooser.setResult(RESULT_OK, intent)
                 this@FileChooser.finish()
             }
         }
@@ -74,6 +90,10 @@ class FileChooser : AppCompatActivity() {
             ) { dialog, value ->
                 mimeType = Constants.JPEG()
                 getContent(mimeType, selection)
+            }.setNeutralButton(
+                "camera"
+            ) { dialog, value ->
+                captureImage(selection)
             }
             .setNegativeButton(
                 "PDF"
@@ -105,5 +125,10 @@ class FileChooser : AppCompatActivity() {
             }
         }
         selection.launch(Intent.createChooser(intent, txt))
+    }
+
+    private fun captureImage( selection: ActivityResultLauncher<Intent>) {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        selection.launch(intent)
     }
 }

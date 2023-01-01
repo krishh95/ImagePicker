@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import com.google.gson.Gson
+import com.ownerapp.imagepicker.FileChooser.Companion.ERROR_CONST
 import com.ownerapp.imagepicker.constants.Constants
 import java.io.File
 
@@ -24,12 +25,11 @@ class MainActivity : AppCompatActivity() {
             result.data?.getStringExtra(FileChooser.OUTPUT),
             FileChooser.Companion.FileChooserResponse::class.java
         )
-       if(fileChooserResponse.status ==0) {
-           txtId.text=fileChooserResponse.error
+
+       if(fileChooserResponse.status == RESULT_OK) {
+           txtId.text= File(fileChooserResponse.data).absolutePath
        }else{
-           txtId.text=if(fileChooserResponse.isBase64) fileChooserResponse.data as String
-                else
-               File(fileChooserResponse.data as String).absolutePath
+           txtId.text=fileChooserResponse.error
        }
 
     }
@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         btn=findViewById(R.id.btn)
         btn.setOnClickListener{
             val intent=Intent(this,FileChooser::class.java)
-            startActivityForResult(intent,1991)
+            selection.launch(intent)
         }
     }
 

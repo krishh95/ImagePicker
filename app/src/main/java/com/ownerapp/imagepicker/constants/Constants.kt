@@ -4,9 +4,7 @@ import com.google.gson.Gson
 
 object Constants {
     val URI="uri"
-    val OUTPUTTYPE="OutputType"
     val EXT="ext"
-    val ERROR="error"
 
 
     open class Extensions protected constructor(val extension:String, val mimeType:String="image/*", val type:Type= Type.IMAGE){
