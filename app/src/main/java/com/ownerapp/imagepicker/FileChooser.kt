@@ -20,25 +20,25 @@ import kotlinx.coroutines.*
  * intentKeys:
  * OUTPUT_TYPE  of type
  * enum class OutputType{
-        Base64,File
-    }
+Base64,File
+}
  */
 class FileChooser : AppCompatActivity() {
     lateinit var mimeType: Constants.Extensions
 
-    companion object{
-        val TAG=FileChooser::class.java.name
-        val OUTPUT="OutPut"
+    companion object {
+        val TAG = FileChooser::class.java.name
+        val OUTPUT = "OutPut"
 
         /***
          * status ==0 fetch Error only
          * else get data and other values
          */
         class FileChooserResponse(
-            val status:Int= -888,
-            val data:String,
-            val isBase64:Boolean=false,
-            val error:String
+            val status: Int = -888,
+            val data: String,
+            val isBase64: Boolean = false,
+            val error: String
         ) {
             override fun toString(): String {
                 return Gson().toJson(this)
@@ -46,47 +46,48 @@ class FileChooser : AppCompatActivity() {
         }
     }
 
-    private val selection =registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result->
-            Log.d(TAG, "imageSelection: "+  result.data)
+    private val selection =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            Log.d(TAG, "imageSelection: " + result.data)
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val data= workDataOf(
-                Constants.URI to (result.data?.data as Uri).toString(),
-                Constants.EXT to  CacheFileSaver.getExtensionString(mimeType),
-            )
-            val resultData=CacheFileSaver.doWorkAsync(applicationContext,data).await()
-            val intent=Intent()
-            intent.putExtra(OUTPUT,resultData.toString())
+            CoroutineScope(Dispatchers.IO).launch {
+                val data = workDataOf(
+                    Constants.URI to (result.data?.data as Uri).toString(),
+                    Constants.EXT to CacheFileSaver.getExtensionString(mimeType),
+                )
+                val resultData = CacheFileSaver.doWorkAsync(applicationContext, data).await()
+                val intent = Intent()
+                intent.putExtra(OUTPUT, resultData.toString())
 
-               this@FileChooser.setResult(7,intent)
-               this@FileChooser.finish()
+                this@FileChooser.setResult(7, intent)
+                this@FileChooser.finish()
+            }
         }
-    }
 
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val alert=AlertDialog.Builder(this)
-        .setPositiveButton(
-            "Gallery"
-        ) { dialog, value ->
-            mimeType= Constants.JPEG()
-            getContent(mimeType, selection)
-        }
-        .setNegativeButton(
-            "PDF"
-        ) { dialog, value ->
-            mimeType= Constants.PDF()
-            getContent(mimeType, selection)
-        }
-        .create()
+        val alert = AlertDialog.Builder(this)
+            .setPositiveButton(
+                "Gallery"
+            ) { dialog, value ->
+                mimeType = Constants.JPEG()
+                getContent(mimeType, selection)
+            }
+            .setNegativeButton(
+                "PDF"
+            ) { dialog, value ->
+                mimeType = Constants.PDF()
+                getContent(mimeType, selection)
+            }
+            .create()
         alert.setCancelable(false)
         alert.setOnDismissListener {
             it.dismiss()
         }
         alert.setOnCancelListener {
-           it.dismiss()
+            it.dismiss()
         }
         alert.show()
     }
@@ -95,9 +96,13 @@ class FileChooser : AppCompatActivity() {
         val intent = Intent()
         intent.type = mime.mimeType
         intent.action = Intent.ACTION_GET_CONTENT
-        val txt=when(mime){
-            is Constants.PDF->{ "Select PDF"}
-            else->{ "Select Picture"}
+        val txt = when (mime) {
+            is Constants.PDF -> {
+                "Select PDF"
+            }
+            else -> {
+                "Select Picture"
+            }
         }
         selection.launch(Intent.createChooser(intent, txt))
     }
