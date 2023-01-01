@@ -1,21 +1,29 @@
 package com.ownerapp.imagepicker.constants
 
-import java.io.File
+import com.google.gson.Gson
 
 object Constants {
     val URI="uri"
+    val OUTPUTTYPE="OutputType"
     val EXT="ext"
     val ERROR="error"
 
-    enum class Extensions(val name1:String):java.io.Serializable{
-        JPEG(".jpg"),
-        PNG(".png"),
-        BMP(".bmp"),
-        PDF(".pdf"),
+
+    open class Extensions protected constructor(val extension:String, val mimeType:String="image/*", val type:Type= Type.IMAGE){
+        override fun toString(): String {
+            return Gson().toJson(this)
+        }
+        companion object{
+            enum class Type{
+                DOC,IMAGE
+            }
+        }
+
     }
 
-    sealed class FileStates(){
-        class FileSuccess(val file: File):FileStates()
-        class FileError(val error:String):FileStates()
-    }
+    class JPEG:Extensions(".jpg")
+    class PNG:Extensions(".png")
+    class BMP:Extensions(".bmp")
+    class PDF:Extensions(".pdf","application/pdf", Companion.Type.DOC)
+
 }
