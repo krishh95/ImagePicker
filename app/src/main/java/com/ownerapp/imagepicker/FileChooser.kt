@@ -2,7 +2,6 @@ package com.ownerapp.imagepicker
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -11,12 +10,16 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.work.*
 import androidx.work.WorkInfo.State.*
 import com.google.gson.Gson
 import com.ownerapp.imagepicker.constants.Constants
 import com.ownerapp.imagepicker.workerManagers.CacheFileSaver
 import kotlinx.coroutines.*
+import java.io.File
+import java.util.*
+
 
 /***
  * intentKeys:
@@ -26,6 +29,7 @@ Base64,File
 }
  */
 class FileChooser : AppCompatActivity() {
+    private var outputFileUri: Uri?=null
     lateinit var mimeType: Constants.Extensions
 
     companion object {
@@ -52,11 +56,11 @@ class FileChooser : AppCompatActivity() {
 
             CoroutineScope(Dispatchers.IO).launch {
 
-                val resultData = if( result.data?.extras?.get("data") is Bitmap ){
+                 val resultData = if(outputFileUri!=null&&outputFileUri.toString().isNotEmpty()){
                     CacheFileSaver.doWorkAsync(
                         applicationContext.contentResolver,
                         applicationContext.cacheDir,
-                        result.data?.extras?.get("data") as Bitmap,
+                        outputFileUri.toString(),
                         Constants.JPEG()
                     ).await()
 
@@ -129,6 +133,17 @@ class FileChooser : AppCompatActivity() {
 
     private fun captureImage( selection: ActivityResultLauncher<Intent>) {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        val file = File(cacheDir, "${UUID.randomUUID().toString().replace("-","").substring(0,15)}.jpg")
+        if(file.exists()){
+            file.delete()
+        }
+        file.createNewFile()
+        outputFileUri = FileProvider.getUriForFile(
+            this,
+            "${BuildConfig.APPLICATION_ID}.provider",
+            file
+        )
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
         selection.launch(intent)
     }
 }
