@@ -26,6 +26,7 @@ import java.util.*
  * OUTPUT_TYPE  of type
  * enum class OutputType{
 Base64,File
+*return constant for success RESULT_OK for error ERROR_CONST
 }
  */
 class FileChooser : AppCompatActivity() {
@@ -36,6 +37,7 @@ class FileChooser : AppCompatActivity() {
         val TAG = FileChooser::class.java.name
         val OUTPUT = "OutPut"
         val ERROR_CONST=-888
+        val RESULT_OK=-1
         /***
          * status ==0 fetch Error only
          * else get data and other values
@@ -56,30 +58,37 @@ class FileChooser : AppCompatActivity() {
 
             CoroutineScope(Dispatchers.IO).launch {
 
-                 val resultData = if(outputFileUri!=null&&outputFileUri.toString().isNotEmpty()){
-                    CacheFileSaver.doWorkAsync(
+                  val intent= if(outputFileUri!=null&&outputFileUri.toString().isNotEmpty()){
+                val resultData=CacheFileSaver.doWorkAsync(
                         applicationContext.contentResolver,
                         applicationContext.cacheDir,
                         outputFileUri.toString(),
                         Constants.JPEG()
                     ).await()
-
+                      val intent = Intent()
+                      intent.putExtra(OUTPUT, resultData.toString())
+                      intent
                 }
-                else{
+                else if(result.data?.data != null){
 
-                    CacheFileSaver.doWorkAsync(
+                val resultData=CacheFileSaver.doWorkAsync(
                         applicationContext.contentResolver,
                         applicationContext.cacheDir,
                         (result.data?.data as Uri).toString(),
                         mimeType
                     ).await()
-
+                      val intent = Intent()
+                      intent.putExtra(OUTPUT, resultData.toString())
+                      intent
+                }else{
+                    null
                 }
 
-                val intent = Intent()
-                intent.putExtra(OUTPUT, resultData.toString())
+                if(intent != null)
+                    this@FileChooser.setResult(RESULT_OK, intent)
+                else
+                    this@FileChooser.setResult(ERROR_CONST)
 
-                this@FileChooser.setResult(RESULT_OK, intent)
                 this@FileChooser.finish()
             }
         }
