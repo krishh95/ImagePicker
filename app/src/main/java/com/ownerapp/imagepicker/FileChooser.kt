@@ -31,13 +31,13 @@ Base64,File
  */
 class FileChooser : AppCompatActivity() {
     private var outputFileUri: Uri?=null
-    lateinit var mimeType: Constants.Extensions
+    private lateinit var mimeType: Constants.Extensions
 
     companion object {
-        val TAG = FileChooser::class.java.name
-        val OUTPUT = "OutPut"
-        val ERROR_CONST=-888
-        val RESULT_OK=-1
+        val TAG = FileChooser::class.java.name ?:"FileChooser"
+        const val OUTPUT = "OutPut"
+        const val ERROR_CONST=-888
+        const val RESULT_OK=-1
         /***
          * status ==0 fetch Error only
          * else get data and other values
@@ -100,17 +100,17 @@ class FileChooser : AppCompatActivity() {
         val alert = AlertDialog.Builder(this)
             .setPositiveButton(
                 "Gallery"
-            ) { dialog, value ->
+            ) { _, _ ->
                 mimeType = Constants.JPEG()
                 getContent(mimeType, selection)
             }.setNeutralButton(
                 "camera"
-            ) { dialog, value ->
+            ) { _, _ ->
                 captureImage(selection)
             }
             .setNegativeButton(
                 "PDF"
-            ) { dialog, value ->
+            ) { _, _ ->
                 mimeType = Constants.PDF()
                 getContent(mimeType, selection)
             }
@@ -152,7 +152,7 @@ class FileChooser : AppCompatActivity() {
             "${BuildConfig.APPLICATION_ID}.provider",
             file
         )
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri)
         selection.launch(intent)
     }
 }
